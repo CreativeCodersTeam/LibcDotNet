@@ -1,19 +1,46 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-using CreativeCoders.LibcDotNet.FileSystem;
+using CreativeCoders.LibcDotNet;
 using CreativeCoders.LibcDotNet.Users;
 
-var fileName = args.FirstOrDefault();
 
-if (!File.Exists(fileName))
+PrintStat(args.FirstOrDefault());
+
+Console.WriteLine("Program done");
+
+void PrintStat(string? fileName)
 {
-    Console.WriteLine("File does not exist");
-    return;
+    if (fileName == null)
+    {
+        return;
+    }
+    
+    try
+    {
+        Console.WriteLine($"File: {fileName}");
+        
+        var stat = LibcFunctions.Stat(fileName);
+
+        var userName = new LibcUsers().GetOwnerName((uint)stat.st_uid);
+        
+        Console.WriteLine($"  User: {userName}");
+        
+        var groupName = new LibcUsers().GetOwnerName((uint)stat.st_gid);
+        
+        Console.WriteLine($"  Group: {groupName}");
+
+        foreach (var field in stat.GetType().GetFields())
+        {
+            Console.WriteLine($"{field.Name}: {field.GetValue(stat)}");
+        }
+    }
+    catch (LibcException e)
+    {
+        Console.WriteLine(e);
+        Console.WriteLine($"{e.ErrorNum}: {e.ErrorText}");
+    }
+    catch (Exception e)
+    {
+        Console.WriteLine(e);
+    }
 }
-
-var fileStat = new LibcFileSystem().Stat64(fileName, out var statBuffer);
-
-var userName = new LibcUsers().GetOwnerName((uint)statBuffer.st_uid);
-
-Console.WriteLine($"Username: {userName}");
-Console.WriteLine("Hello, World!");
